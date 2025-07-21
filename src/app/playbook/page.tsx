@@ -7,12 +7,18 @@ export default function PlaybookPage() {
     let error = '';
 
     try {
-        // Correct path: go up one level from x-god-tracker to find the playbook file
-        const filePath = path.join(process.cwd(), '..', 'distribution_relationship_playbook.md');
-        markdown = fs.readFileSync(filePath, 'utf-8');
+        // Path to playbook file in project root
+        const filePath = path.join(process.cwd(), 'distribution_relationship_playbook.md');
+        
+        // Check if file exists first to avoid throwing during static generation
+        if (fs.existsSync(filePath)) {
+            markdown = fs.readFileSync(filePath, 'utf-8');
+        } else {
+            error = 'Playbook file not found. Please ensure distribution_relationship_playbook.md exists in the project root.';
+        }
     } catch (err) {
         error = 'Could not load the playbook file. Please ensure distribution_relationship_playbook.md exists in the project root.';
-        console.error('Playbook loading error:', err);
+        console.warn('Playbook loading error:', err);
     }
 
     if (error) {
@@ -22,7 +28,7 @@ export default function PlaybookPage() {
                     <h1 className="text-2xl font-bold text-destructive mb-4">Playbook Not Found</h1>
                     <p className="text-muted-foreground">{error}</p>
                     <p className="text-sm text-muted-foreground mt-4">
-                        Expected location: <code>../distribution_relationship_playbook.md</code>
+                        Expected location: <code>./distribution_relationship_playbook.md</code>
                     </p>
                 </div>
             </div>
