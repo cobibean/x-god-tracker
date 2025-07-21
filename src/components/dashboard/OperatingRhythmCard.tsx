@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Play, Pause, Square, RotateCcw } from 'lucide-react';
+import { Play, Pause, Square, RotateCcw, VolumeX } from 'lucide-react';
 import { useConfigType } from '@/lib/config-context';
 
 interface TimerState {
   isActive: boolean;
   timeRemaining: number;
   totalTime: number;
+  startTime?: number; // Timestamp when timer started
 }
 
 export function OperatingRhythmCard() {
@@ -22,6 +23,7 @@ export function OperatingRhythmCard() {
   const [audioFiles, setAudioFiles] = useState<string[]>([]);
   const audioFilesRef = useRef<string[]>([]);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   // Audio control functions
   const stopCurrentAudio = useCallback(() => {
@@ -29,6 +31,7 @@ export function OperatingRhythmCard() {
       currentAudioRef.current.pause();
       currentAudioRef.current.currentTime = 0;
       currentAudioRef.current = null;
+      setIsAudioPlaying(false);
     }
   }, []);
 
@@ -49,21 +52,26 @@ export function OperatingRhythmCard() {
       const audio = new Audio(randomFile);
       audio.volume = 0.7;
       currentAudioRef.current = audio;
+      setIsAudioPlaying(true);
       
       // Clean up reference when audio ends
       audio.addEventListener('ended', () => {
         currentAudioRef.current = null;
+        setIsAudioPlaying(false);
       });
       
       audio.addEventListener('error', () => {
         currentAudioRef.current = null;
+        setIsAudioPlaying(false);
       });
       
       audio.play().catch(() => {
         currentAudioRef.current = null;
+        setIsAudioPlaying(false);
       });
     } catch (error) {
       // Silent fail - audio not supported
+      setIsAudioPlaying(false);
     }
   }, [stopCurrentAudio]);
 
@@ -107,28 +115,43 @@ export function OperatingRhythmCard() {
     setTimers(initialTimers);
   }, [enabledBlocks]);
 
-  // Timer effect
+  // FIXED: Timestamp-based timer that works in background tabs
   useEffect(() => {
     const interval = setInterval(() => {
+      const now = Date.now();
+      
       setTimers(prev => {
         const updated = { ...prev };
-        let hasActiveTimer = false;
+        let hasCompletedTimer = false;
 
         Object.keys(updated).forEach(blockId => {
           const timer = updated[blockId];
-          if (timer && timer.isActive && timer.timeRemaining > 0) {
-            updated[blockId] = {
-              ...timer,
-              timeRemaining: timer.timeRemaining - 1,
-            };
-            hasActiveTimer = true;
-          } else if (timer && timer.isActive && timer.timeRemaining <= 0) {
-            // Timer completed
-            updated[blockId] = {
-              ...timer,
-              isActive: false,
-            };
+          if (timer && timer.isActive && timer.startTime) {
+            // Calculate elapsed time since start
+            const elapsedSeconds = Math.floor((now - timer.startTime) / 1000);
+            const newTimeRemaining = Math.max(0, timer.totalTime - elapsedSeconds);
             
+            if (newTimeRemaining > 0) {
+              // Timer still running
+              updated[blockId] = {
+                ...timer,
+                timeRemaining: newTimeRemaining,
+              };
+            } else {
+              // Timer completed
+              updated[blockId] = {
+                ...timer,
+                isActive: false,
+                timeRemaining: 0,
+              };
+              hasCompletedTimer = true;
+            }
+          }
+        });
+
+        // Handle timer completion (outside the loop to avoid state issues)
+        if (hasCompletedTimer) {
+          setTimeout(() => {
             // Play random alarm sound
             playRandomAlarm();
             
@@ -150,15 +173,15 @@ export function OperatingRhythmCard() {
                 });
               }
             }
-          }
-        });
+          }, 100);
+        }
 
         return updated;
       });
-    }, 1000);
+    }, 100); // Check every 100ms for smoother updates
 
     return () => clearInterval(interval);
-  }, []);
+  }, [playRandomAlarm]);
 
   const toggleTimer = useCallback((blockId: string) => {
     // Stop any playing audio when toggling timers
@@ -170,13 +193,35 @@ export function OperatingRhythmCard() {
         return prev;
       }
       
-      return {
-        ...prev,
-        [blockId]: {
-          ...currentTimer,
-          isActive: !currentTimer.isActive,
-        },
-      };
+      const now = Date.now();
+      
+      if (currentTimer.isActive) {
+        // Pausing timer - calculate remaining time
+        const elapsedSeconds = currentTimer.startTime ? Math.floor((now - currentTimer.startTime) / 1000) : 0;
+        const newTimeRemaining = Math.max(0, currentTimer.totalTime - elapsedSeconds);
+        
+        return {
+          ...prev,
+          [blockId]: {
+            ...currentTimer,
+            isActive: false,
+            timeRemaining: newTimeRemaining,
+            startTime: undefined,
+          },
+        };
+      } else {
+        // Starting timer - set start time based on remaining time
+        const targetDuration = currentTimer.timeRemaining;
+        
+        return {
+          ...prev,
+          [blockId]: {
+            ...currentTimer,
+            isActive: true,
+            startTime: now - (currentTimer.totalTime - targetDuration) * 1000,
+          },
+        };
+      }
     });
   }, [stopCurrentAudio]);
 
@@ -194,6 +239,7 @@ export function OperatingRhythmCard() {
           ...currentTimer,
           isActive: false,
           timeRemaining: currentTimer.totalTime,
+          startTime: undefined,
         },
       };
     });
@@ -205,11 +251,26 @@ export function OperatingRhythmCard() {
     
     setTimers(prev => {
       const updated = { ...prev };
+      const now = Date.now();
+      
       Object.keys(updated).forEach(blockId => {
-        updated[blockId] = {
-          ...updated[blockId],
-          isActive: false,
-        };
+        const timer = updated[blockId];
+        if (timer && timer.isActive && timer.startTime) {
+          const elapsedSeconds = Math.floor((now - timer.startTime) / 1000);
+          const newTimeRemaining = Math.max(0, timer.totalTime - elapsedSeconds);
+          
+          updated[blockId] = {
+            ...timer,
+            isActive: false,
+            timeRemaining: newTimeRemaining,
+            startTime: undefined,
+          };
+        } else {
+          updated[blockId] = {
+            ...updated[blockId],
+            isActive: false,
+          };
+        }
       });
       return updated;
     });
@@ -228,6 +289,7 @@ export function OperatingRhythmCard() {
             isActive: false,
             timeRemaining: block.duration * 60,
             totalTime: block.duration * 60,
+            startTime: undefined,
           };
         }
       });
@@ -253,6 +315,16 @@ export function OperatingRhythmCard() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-card-foreground">Operating Rhythm</h2>
         <div className="flex space-x-2">
+          {/* ADDED: Stop Audio Button */}
+          {isAudioPlaying && (
+            <button
+              onClick={stopCurrentAudio}
+              className="flex items-center space-x-1 px-3 py-1 text-xs bg-red-500/10 text-red-500 border border-red-500/20 rounded-md hover:bg-red-500/20 transition-colors"
+            >
+              <VolumeX className="w-3 h-3" />
+              <span>Stop Audio</span>
+            </button>
+          )}
           {hasActiveTimers && (
             <button
               onClick={stopAllTimers}
