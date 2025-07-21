@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const schema = getSchema(configType);
     const configManager = getConfigManager();
 
-    const config = await configManager.getConfig(configType, schema as any);
+    const config = await configManager.getConfig(configType, schema as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     return NextResponse.json({
       success: true,
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let body;
     try {
       body = await request.json();
-    } catch (parseError) {
+    } catch {
       return NextResponse.json(
         { 
           success: false, 
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const configManager = getConfigManager();
 
     // Save configuration
-    await configManager.setConfig(configType, validatedData, schema as any);
+    await configManager.setConfig(configType, validatedData, schema as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Broadcast change via Server-Sent Events
     await broadcastConfigChange(configType, validatedData);
@@ -152,7 +152,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Get the default config to return and broadcast
     const schema = getSchema(configType);
-    const defaultConfig = await configManager.getConfig(configType, schema as any);
+    const defaultConfig = await configManager.getConfig(configType, schema as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Broadcast change via Server-Sent Events
     await broadcastConfigChange(configType, defaultConfig);

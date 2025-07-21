@@ -57,7 +57,7 @@ function initializeTables() {
 export interface ConfigHistory {
   id: number;
   config_type: string;
-  data: any;
+  data: unknown;
   created_at: string;
 }
 
@@ -79,7 +79,7 @@ export class ConfigManager {
       if (!result) {
         // Return default config if not found
         const defaultConfig = DEFAULT_CONFIGS[type];
-        await this.setConfig(type, defaultConfig as any, schema);
+        await this.setConfig(type, defaultConfig as T, schema);
         return defaultConfig as T;
       }
       
@@ -148,7 +148,7 @@ export class ConfigManager {
       const results = stmt.all(type) as ConfigHistory[];
       return results.map(row => ({
         ...row,
-        data: JSON.parse(row.data as any),
+        data: JSON.parse(row.data as string),
       }));
     } catch (error) {
       console.error(`Error getting history for ${type}:`, error);
@@ -168,12 +168,12 @@ export class ConfigManager {
   /**
    * Export all configurations
    */
-  async exportConfigs(): Promise<any> {
+  async exportConfigs(): Promise<Record<string, unknown>> {
     try {
       const stmt = this.db.prepare('SELECT type, data FROM configs');
       const results = stmt.all() as { type: string; data: string }[];
       
-      const configs: any = {};
+      const configs: Record<string, unknown> = {};
       for (const row of results) {
         configs[row.type] = JSON.parse(row.data);
       }
@@ -192,14 +192,14 @@ export class ConfigManager {
   /**
    * Import configurations with validation
    */
-  async importConfigs(data: any): Promise<void> {
+  async importConfigs(data: { configs?: Record<string, unknown> }): Promise<void> {
     try {
       if (!data.configs || typeof data.configs !== 'object') {
         throw new Error('Invalid import format');
       }
       
       const transaction = this.db.transaction(() => {
-        for (const [type, config] of Object.entries(data.configs)) {
+        for (const [type, config] of Object.entries(data.configs!)) {
           if (type in DEFAULT_CONFIGS) {
             const schema = getSchema(type as ConfigType);
             // Validate before importing

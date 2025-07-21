@@ -36,7 +36,7 @@ const PixelTrail: React.FC<PixelTrailProps> = ({
         `${trailId.current}-pixel-${x}-${y}`
       )
       if (pixelElement) {
-        const animatePixel = (pixelElement as any).__animatePixel
+        const animatePixel = (pixelElement as HTMLDivElement & { __animatePixel?: () => void }).__animatePixel
         if (animatePixel) animatePixel()
       }
     },
@@ -107,7 +107,7 @@ const PixelDot: React.FC<PixelDotProps> = React.memo(
     const ref = useCallback(
       (node: HTMLDivElement | null) => {
         if (node) {
-          ;(node as any).__animatePixel = animatePixel
+          ;(node as HTMLDivElement & { __animatePixel?: () => void }).__animatePixel = animatePixel
         }
       },
       [animatePixel]

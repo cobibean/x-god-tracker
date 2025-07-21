@@ -32,8 +32,7 @@ import {
   Eye,
   EyeOff,
   Clock,
-  RotateCcw,
-  Play
+  RotateCcw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 

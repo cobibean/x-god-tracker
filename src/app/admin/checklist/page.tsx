@@ -32,12 +32,9 @@ import {
   Eye,
   EyeOff,
   Palette,
-  RotateCcw,
-  Download,
-  Upload
+  RotateCcw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { HexColorPicker } from 'react-colorful';
 
 interface SortableTaskProps {
   task: ChecklistTask;
@@ -234,7 +231,7 @@ interface CategoryManagerProps {
 
 function CategoryManager({ categories, onUpdateCategories }: CategoryManagerProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<{ key: string; category: Category } | null>(null);
+  // const [editingCategory, setEditingCategory] = useState<{ key: string; category: Category } | null>(null);
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
 
   const tailwindColors = [

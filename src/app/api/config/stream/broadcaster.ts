@@ -11,7 +11,7 @@ export function removeClient(controller: ReadableStreamDefaultController) {
   clients.delete(controller);
 }
 
-export async function broadcastConfigChange(type: ConfigType, data: any) {
+export async function broadcastConfigChange(type: ConfigType, data: unknown) {
   const message = JSON.stringify({ type, data });
   const sseData = `data: ${message}\n\n`;
 
@@ -19,7 +19,7 @@ export async function broadcastConfigChange(type: ConfigType, data: any) {
   for (const client of clients) {
     try {
       client.enqueue(new TextEncoder().encode(sseData));
-    } catch (error) {
+    } catch {
       // Remove disconnected clients
       clients.delete(client);
       console.log('Removed disconnected SSE client');

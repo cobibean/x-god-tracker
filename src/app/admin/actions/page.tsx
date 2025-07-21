@@ -12,8 +12,7 @@ import {
   Target,
   Eye,
   EyeOff,
-  RotateCcw,
-  Hash
+  RotateCcw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 

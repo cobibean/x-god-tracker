@@ -5,13 +5,11 @@ import { useAdminConfig } from '@/lib/config-context';
 import { ScoringRules, ScoringThresholds, ScoringMessages } from '@/lib/config-schemas';
 import { 
   Save, 
-  Award,
   Calculator,
   RotateCcw,
   Info,
   TrendingUp,
-  MessageSquare,
-  Target
+  MessageSquare
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 

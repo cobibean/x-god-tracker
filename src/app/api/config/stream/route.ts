@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
             timestamp: new Date().toISOString() 
           })}\n\n`;
           controller.enqueue(new TextEncoder().encode(pingMessage));
-        } catch (error) {
+        } catch {
           // Client disconnected
           if (keepAliveInterval) {
             clearInterval(keepAliveInterval);

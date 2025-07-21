@@ -167,7 +167,7 @@ export default function AppearanceAdmin() {
             <p className="text-blue-700 dark:text-blue-300 font-medium mb-1">Appearance Settings</p>
             <p className="text-blue-600 dark:text-blue-400 leading-relaxed">
               These settings control the visual appearance of your dashboard. Changes are applied immediately when you preview or save.
-              Use "System" theme to automatically match your device's appearance.
+              Use &quot;System&quot; theme to automatically match your device&apos;s appearance.
             </p>
           </div>
         </div>

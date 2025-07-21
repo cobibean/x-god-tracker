@@ -35,7 +35,7 @@ const safeJSONParse = <T>(key: string, fallback: T): T => {
 };
 
 // Safe JSON storing
-const safeJSONStore = (key: string, value: any): void => {
+const safeJSONStore = (key: string, value: unknown): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {

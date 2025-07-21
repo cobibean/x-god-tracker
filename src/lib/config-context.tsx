@@ -8,7 +8,7 @@ interface ConfigContextType {
   configs: AllConfigs;
   loading: boolean;
   error: string | null;
-  updateConfig: (type: ConfigType, data: any) => Promise<boolean>;
+  updateConfig: (type: ConfigType, data: AllConfigs[ConfigType]) => Promise<boolean>;
   refreshConfig: (type: ConfigType) => Promise<void>;
   refreshAllConfigs: () => Promise<void>;
 }
@@ -84,7 +84,7 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
   }, [loadConfigs]);
 
   // Update configuration
-  const updateConfig = useCallback(async (type: ConfigType, data: any): Promise<boolean> => {
+  const updateConfig = useCallback(async (type: ConfigType, data: AllConfigs[ConfigType]): Promise<boolean> => {
     try {
       const response = await fetch(`/api/config/${type}`, {
         method: 'POST',
@@ -195,7 +195,7 @@ export function useAdminConfig(type: ConfigType) {
   
   const config = configs[type];
   
-  const saveConfig = useCallback(async (data: any) => {
+  const saveConfig = useCallback(async (data: AllConfigs[typeof type]) => {
     const success = await updateConfig(type, data);
     if (!success) {
       // Refresh to get latest state on failure

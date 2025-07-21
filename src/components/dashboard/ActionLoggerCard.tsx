@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Minus, Target, TrendingUp } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 import { useConfigType } from '@/lib/config-context';
+import { ActionType } from '@/lib/config-schemas';
 
 interface ActionCounts {
   [key: string]: number;
@@ -66,7 +67,7 @@ export function ActionLoggerCard() {
     setActionCounts(resetCounts);
   };
 
-  const getTargetStatus = (action: any) => {
+  const getTargetStatus = (action: ActionType) => {
     const count = actionCounts[action.key] || 0;
     if (!action.target) return null;
     

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Play, Pause, Square, RotateCcw, VolumeX } from 'lucide-react';
+import { Play, Pause, RotateCcw, VolumeX } from 'lucide-react';
 import { useConfigType } from '@/lib/config-context';
+import { RhythmBlock } from '@/lib/config-schemas';
 
 interface TimerState {
   isActive: boolean;
@@ -14,8 +15,7 @@ interface TimerState {
 export function OperatingRhythmCard() {
   // Get rhythm configuration
   const config = useConfigType('rhythm');
-  const blocks = config?.blocks || [];
-
+  
   // State for timers
   const [timers, setTimers] = useState<Record<string, TimerState>>({});
   
@@ -69,7 +69,7 @@ export function OperatingRhythmCard() {
         currentAudioRef.current = null;
         setIsAudioPlaying(false);
       });
-    } catch (error) {
+          } catch {
       // Silent fail - audio not supported
       setIsAudioPlaying(false);
     }
@@ -95,17 +95,17 @@ export function OperatingRhythmCard() {
   }, []);
 
   // Filter enabled blocks and sort by order - memoized to prevent infinite re-renders
-  const enabledBlocks = useMemo(() => 
-    blocks
-      .filter(block => block.enabled)
-      .sort((a, b) => a.order - b.order),
-    [blocks]
-  );
+  const enabledBlocks = useMemo(() => {
+    const blocks = config?.blocks || [];
+    return blocks
+      .filter((block: RhythmBlock) => block.enabled)
+      .sort((a: RhythmBlock, b: RhythmBlock) => a.order - b.order);
+  }, [config?.blocks]);
 
   // Initialize timers for enabled blocks
   useEffect(() => {
     const initialTimers: Record<string, TimerState> = {};
-    enabledBlocks.forEach(block => {
+    enabledBlocks.forEach((block: RhythmBlock) => {
       initialTimers[block.id] = {
         isActive: false,
         timeRemaining: block.duration * 60, // Convert minutes to seconds
@@ -283,7 +283,7 @@ export function OperatingRhythmCard() {
     setTimers(prev => {
       const resetTimers: Record<string, TimerState> = {};
       Object.keys(prev).forEach(blockId => {
-        const block = enabledBlocks.find(b => b.id === blockId);
+        const block = enabledBlocks.find((b: RhythmBlock) => b.id === blockId);
         if (block) {
           resetTimers[blockId] = {
             isActive: false,
@@ -344,7 +344,7 @@ export function OperatingRhythmCard() {
 
       {/* Timer Blocks */}
       <div className="space-y-4 max-h-96 overflow-y-auto">
-        {enabledBlocks.map((block) => {
+        {enabledBlocks.map((block: RhythmBlock) => {
           const timer = timers[block.id];
           if (!timer) return null;
 
