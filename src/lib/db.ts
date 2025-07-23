@@ -12,13 +12,20 @@ let db: Database.Database | null = null;
 
 function getDatabase() {
   if (!db) {
-    db = new Database(DB_PATH);
-    
-    // Enable WAL mode for better concurrency
-    db.pragma('journal_mode = WAL');
-    
-    // Create tables if they don't exist
-    initializeTables();
+    try {
+      console.log('Initializing database at:', DB_PATH);
+      db = new Database(DB_PATH);
+      
+      // Enable WAL mode for better concurrency
+      db.pragma('journal_mode = WAL');
+      
+      // Create tables if they don't exist
+      initializeTables();
+      console.log('Database initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize database:', error);
+      throw error;
+    }
   }
   return db;
 }
@@ -65,7 +72,12 @@ export class ConfigManager {
   private db: Database.Database;
   
   constructor() {
-    this.db = getDatabase();
+    try {
+      this.db = getDatabase();
+    } catch (error) {
+      console.error('ConfigManager: Failed to get database instance:', error);
+      throw new Error('Failed to initialize ConfigManager: Database connection failed');
+    }
   }
   
   /**
@@ -253,7 +265,12 @@ let configManager: ConfigManager | null = null;
 
 export function getConfigManager(): ConfigManager {
   if (!configManager) {
-    configManager = new ConfigManager();
+    try {
+      configManager = new ConfigManager();
+    } catch (error) {
+      console.error('getConfigManager: Failed to create ConfigManager instance:', error);
+      throw error;
+    }
   }
   return configManager;
 }

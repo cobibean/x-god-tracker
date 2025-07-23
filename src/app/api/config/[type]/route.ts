@@ -56,9 +56,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Await params in Next.js 15+
     const { type } = await params;
     
+    console.log(`POST /api/config/${type} - Request received`);
+    
     // Validate config type
     const typeResult = ConfigTypeSchema.safeParse(type);
     if (!typeResult.success) {
+      console.error(`Invalid config type: ${type}`, typeResult.error);
       return NextResponse.json(
         { 
           success: false, 
@@ -76,7 +79,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let body;
     try {
       body = await request.json();
-    } catch {
+      console.log(`POST /api/config/${type} - Body parsed:`, body);
+    } catch (e) {
+      console.error(`Failed to parse JSON body:`, e);
       return NextResponse.json(
         { 
           success: false, 
@@ -89,6 +94,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Validate configuration data
     const validationResult = schema.safeParse(body);
     if (!validationResult.success) {
+      console.error(`Validation failed for ${type}:`, validationResult.error);
       return NextResponse.json(
         { 
           success: false, 
@@ -104,6 +110,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Save configuration
     await configManager.setConfig(configType, validatedData, schema as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    console.log(`POST /api/config/${type} - Saved successfully`);
 
     // Broadcast change via Server-Sent Events
     await broadcastConfigChange(configType, validatedData);
@@ -123,6 +130,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       { status: 500 }
     );
   }
+}
+
+// PUT /api/config/[type] - Update configuration (alias for POST)
+export async function PUT(request: NextRequest, params: RouteParams) {
+  return POST(request, params);
 }
 
 // DELETE /api/config/[type] - Reset to defaults
