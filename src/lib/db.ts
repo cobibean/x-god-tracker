@@ -264,6 +264,14 @@ export class ConfigManager {
 let configManager: ConfigManager | null = null;
 
 export function getConfigManager(): ConfigManager {
+  // Check if we should use PostgreSQL in production
+  if (process.env.POSTGRES_URL) {
+    // Dynamically import PostgreSQL implementation
+    const { getConfigManager: getPostgresManager } = require('./db-postgres');
+    return getPostgresManager();
+  }
+  
+  // Use SQLite for development
   if (!configManager) {
     try {
       configManager = new ConfigManager();
