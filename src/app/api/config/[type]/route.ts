@@ -15,9 +15,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Await params in Next.js 15+
     const { type } = await params;
     
+    console.log(`GET /api/config/${type} - Request received`);
+    console.log('Environment check:', {
+      hasPostgresUrl: !!process.env.POSTGRES_URL,
+      nodeEnv: process.env.NODE_ENV
+    });
+    
     // Validate config type
     const typeResult = ConfigTypeSchema.safeParse(type);
     if (!typeResult.success) {
+      console.error(`Invalid config type: ${type}`, typeResult.error);
       return NextResponse.json(
         { 
           success: false, 
@@ -30,20 +37,31 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const configType = typeResult.data;
     const schema = getSchema(configType);
+    
+    console.log(`Attempting to get ConfigManager...`);
     const configManager = getConfigManager();
+    console.log(`ConfigManager obtained successfully`);
 
     const config = await configManager.getConfig(configType, schema as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
+    
+    console.log(`GET /api/config/${type} - Success`);
     return NextResponse.json({
       success: true,
       data: config,
     });
   } catch (error) {
-    console.error('Error getting config:', error);
+    console.error('GET /api/config Error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown error type'
+    });
+    
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Failed to retrieve configuration' 
+        error: 'Failed to retrieve configuration',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     );
@@ -57,6 +75,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { type } = await params;
     
     console.log(`POST /api/config/${type} - Request received`);
+    console.log('Environment check:', {
+      hasPostgresUrl: !!process.env.POSTGRES_URL,
+      nodeEnv: process.env.NODE_ENV
+    });
     
     // Validate config type
     const typeResult = ConfigTypeSchema.safeParse(type);
@@ -79,7 +101,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let body;
     try {
       body = await request.json();
-      console.log(`POST /api/config/${type} - Body parsed:`, body);
+      console.log(`POST /api/config/${type} - Body parsed:`, JSON.stringify(body).substring(0, 200) + '...');
     } catch (e) {
       console.error(`Failed to parse JSON body:`, e);
       return NextResponse.json(
@@ -106,7 +128,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const validatedData = validationResult.data;
+    
+    console.log(`Attempting to get ConfigManager for save...`);
     const configManager = getConfigManager();
+    console.log(`ConfigManager obtained successfully for save`);
 
     // Save configuration
     await configManager.setConfig(configType, validatedData, schema as any); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -120,12 +145,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: validatedData,
     });
   } catch (error) {
-    console.error('Error updating config:', error);
+    console.error('POST /api/config Error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown error type'
+    });
+    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { 
         success: false, 
-        error: `Failed to update configuration: ${errorMessage}` 
+        error: `Failed to update configuration: ${errorMessage}`,
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     );

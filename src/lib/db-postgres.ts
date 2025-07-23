@@ -13,11 +13,19 @@ export interface ConfigHistory {
 export class ConfigManager {
   constructor() {
     // Initialize tables on first use
-    this.initializeTables();
+    this.initializeTables().catch(error => {
+      console.error('Failed to initialize PostgreSQL tables:', error);
+    });
   }
   
   private async initializeTables() {
     try {
+      console.log('PostgreSQL: Initializing tables...');
+      
+      // Check if we can connect
+      const testResult = await sql`SELECT 1 as test`;
+      console.log('PostgreSQL: Connection successful', testResult);
+      
       // Create configs table
       await sql`
         CREATE TABLE IF NOT EXISTS configs (
@@ -47,9 +55,10 @@ export class ConfigManager {
         CREATE INDEX IF NOT EXISTS idx_history_type ON config_history(config_type)
       `;
       
-      console.log('PostgreSQL tables initialized successfully');
+      console.log('PostgreSQL: Tables initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize PostgreSQL tables:', error);
+      console.error('PostgreSQL: Failed to initialize tables:', error);
+      throw new Error(`Database initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
   
@@ -58,11 +67,14 @@ export class ConfigManager {
    */
   async getConfig<T>(type: ConfigType, schema: z.ZodSchema<T>): Promise<T> {
     try {
+      console.log(`PostgreSQL: Getting config for ${type}`);
+      
       const result = await sql`
         SELECT data FROM configs WHERE type = ${type}
       `;
       
       if (result.rows.length === 0) {
+        console.log(`PostgreSQL: No config found for ${type}, using defaults`);
         // Return default config if not found
         const defaultConfig = DEFAULT_CONFIGS[type];
         await this.setConfig(type, defaultConfig as T, schema);
@@ -71,9 +83,10 @@ export class ConfigManager {
       
       const parsed = result.rows[0].data;
       const validated = schema.parse(parsed);
+      console.log(`PostgreSQL: Successfully retrieved config for ${type}`);
       return validated;
     } catch (error) {
-      console.error(`Error getting config for ${type}:`, error);
+      console.error(`PostgreSQL: Error getting config for ${type}:`, error);
       // Return default on error
       return DEFAULT_CONFIGS[type] as T;
     }
@@ -84,6 +97,8 @@ export class ConfigManager {
    */
   async setConfig<T>(type: ConfigType, data: T, schema: z.ZodSchema<T>): Promise<void> {
     try {
+      console.log(`PostgreSQL: Setting config for ${type}`);
+      
       // Validate data
       const validated = schema.parse(data);
       
@@ -108,9 +123,11 @@ export class ConfigManager {
           data = EXCLUDED.data,
           updated_at = EXCLUDED.updated_at
       `;
+      
+      console.log(`PostgreSQL: Successfully saved config for ${type}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`Error setting config for ${type}:`, error);
+      console.error(`PostgreSQL: Error setting config for ${type}:`, error);
       throw new Error(`Failed to save configuration: ${errorMessage}`);
     }
   }

@@ -266,16 +266,27 @@ let configManager: ConfigManager | null = null;
 export function getConfigManager(): ConfigManager {
   // Check if we should use PostgreSQL in production
   if (process.env.POSTGRES_URL) {
-    // Dynamically import PostgreSQL implementation
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getConfigManager: getPostgresManager } = require('./db-postgres');
-    return getPostgresManager();
+    console.log('POSTGRES_URL detected, attempting to use PostgreSQL...');
+    try {
+      // Dynamically import PostgreSQL implementation
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { getConfigManager: getPostgresManager } = require('./db-postgres');
+      console.log('PostgreSQL module loaded successfully');
+      return getPostgresManager();
+    } catch (error) {
+      console.error('Failed to load PostgreSQL implementation:', error);
+      console.log('Falling back to SQLite...');
+      // Fall through to SQLite fallback
+    }
+  } else {
+    console.log('No POSTGRES_URL found, using SQLite');
   }
   
-  // Use SQLite for development
+  // Use SQLite for development or as fallback
   if (!configManager) {
     try {
       configManager = new ConfigManager();
+      console.log('SQLite ConfigManager initialized successfully');
     } catch (error) {
       console.error('getConfigManager: Failed to create ConfigManager instance:', error);
       throw error;
