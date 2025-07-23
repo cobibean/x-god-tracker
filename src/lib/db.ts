@@ -267,6 +267,7 @@ export function getConfigManager(): ConfigManager {
   // Check if we should use PostgreSQL in production
   if (process.env.POSTGRES_URL) {
     // Dynamically import PostgreSQL implementation
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getConfigManager: getPostgresManager } = require('./db-postgres');
     return getPostgresManager();
   }

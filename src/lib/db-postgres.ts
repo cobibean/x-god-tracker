@@ -128,11 +128,11 @@ export class ConfigManager {
         LIMIT 10
       `;
       
-      return result.rows.map((row: any) => ({
-        id: row.id,
-        config_type: row.config_type,
+      return result.rows.map((row) => ({
+        id: Number(row.id),
+        config_type: String(row.config_type),
         data: row.data,
-        created_at: row.created_at.toISOString(),
+        created_at: new Date(row.created_at as string | Date).toISOString(),
       }));
     } catch (error) {
       console.error(`Error getting history for ${type}:`, error);
