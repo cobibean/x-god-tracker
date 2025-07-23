@@ -264,8 +264,11 @@ export class ConfigManager {
 let configManager: ConfigManager | null = null;
 
 export function getConfigManager(): ConfigManager {
+  // TEMPORARY: Disable PostgreSQL while debugging connection issues
+  const FORCE_SQLITE = true; // Set to false once PostgreSQL is working
+  
   // Check if we should use PostgreSQL in production
-  if (process.env.POSTGRES_URL) {
+  if (process.env.POSTGRES_URL && !FORCE_SQLITE) {
     console.log('POSTGRES_URL detected, attempting to use PostgreSQL...');
     try {
       // Dynamically import PostgreSQL implementation
@@ -279,7 +282,11 @@ export function getConfigManager(): ConfigManager {
       // Fall through to SQLite fallback
     }
   } else {
-    console.log('No POSTGRES_URL found, using SQLite');
+    if (FORCE_SQLITE) {
+      console.log('PostgreSQL temporarily disabled, using SQLite');
+    } else {
+      console.log('No POSTGRES_URL found, using SQLite');
+    }
   }
   
   // Use SQLite for development or as fallback
