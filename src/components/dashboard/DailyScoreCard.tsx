@@ -4,7 +4,7 @@ import { BentoCard } from "@/components/ui/bento-grid";
 import { useEffect, useState } from "react";
 import { scoreStore } from "@/lib/store";
 import { useConfigType } from "@/lib/config-context";
-import dynamic from "next/dynamic";
+//
 import { Celebration } from "./Celebration";
 
 // Compute score with weights from scoring config
