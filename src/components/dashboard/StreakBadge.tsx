@@ -29,6 +29,8 @@ export function StreakBadge() {
     const onUp = () => compute();
     window.addEventListener('storageUpdated', onUp);
     return () => window.removeEventListener('storageUpdated', onUp);
+    // compute uses stable functions and local state; safe to ignore exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (streak <= 0) return null;

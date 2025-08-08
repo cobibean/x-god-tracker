@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfigManager } from '@/lib/db';
 
-export async function GET(request: NextRequest) {
+export async function GET(_: NextRequest) {
   try {
     console.log('Health check requested');
     

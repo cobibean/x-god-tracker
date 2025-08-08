@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['better-sqlite3'],
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'html.tailus.io' },
+    ],
+  },
   webpack: (config, { isServer }) => {
     if (isServer) {
       // Externalize better-sqlite3 to prevent bundling issues

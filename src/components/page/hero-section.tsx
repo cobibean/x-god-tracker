@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { AnimatedGroup } from '@/components/ui/animated-group'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import Image from 'next/image'
 import { InfiniteSlider } from '@/components/ui/infinite-slider'
 import { ProgressiveBlur } from '@/components/ui/progressive-blur'
 import { PixelTrail } from '@/components/ui/pixel-trail'
@@ -199,77 +200,77 @@ const LogoCloud = () => {
                             duration={40}
                             gap={112}>
                             <div className="flex">
-                                <img
+                                <Image
                                     className="mx-auto h-5 w-fit dark:invert"
                                     src="https://html.tailus.io/blocks/customers/nvidia.svg"
                                     alt="Nvidia Logo"
-                                    height="20"
-                                    width="auto"
+                                    width={200}
+                                    height={20}
                                 />
                             </div>
 
                             <div className="flex">
-                                <img
+                                <Image
                                     className="mx-auto h-4 w-fit dark:invert"
                                     src="https://html.tailus.io/blocks/customers/column.svg"
                                     alt="Column Logo"
-                                    height="16"
-                                    width="auto"
+                                    width={200}
+                                    height={16}
                                 />
                             </div>
                             <div className="flex">
-                                <img
+                                <Image
                                     className="mx-auto h-4 w-fit dark:invert"
                                     src="https://html.tailus.io/blocks/customers/github.svg"
                                     alt="GitHub Logo"
-                                    height="16"
-                                    width="auto"
+                                    width={200}
+                                    height={16}
                                 />
                             </div>
                             <div className="flex">
-                                <img
+                                <Image
                                     className="mx-auto h-5 w-fit dark:invert"
                                     src="https://html.tailus.io/blocks/customers/nike.svg"
                                     alt="Nike Logo"
-                                    height="20"
-                                    width="auto"
+                                    width={200}
+                                    height={20}
                                 />
                             </div>
                             <div className="flex">
-                                <img
+                                <Image
                                     className="mx-auto h-5 w-fit dark:invert"
                                     src="https://html.tailus.io/blocks/customers/lemonsqueezy.svg"
                                     alt="Lemon Squeezy Logo"
-                                    height="20"
-                                    width="auto"
+                                    width={200}
+                                    height={20}
                                 />
                             </div>
                             <div className="flex">
-                                <img
+                                <Image
                                     className="mx-auto h-4 w-fit dark:invert"
                                     src="https://html.tailus.io/blocks/customers/laravel.svg"
                                     alt="Laravel Logo"
-                                    height="16"
-                                    width="auto"
+                                    width={200}
+                                    height={16}
                                 />
                             </div>
                             <div className="flex">
-                                <img
+                                <Image
                                     className="mx-auto h-7 w-fit dark:invert"
                                     src="https://html.tailus.io/blocks/customers/lilly.svg"
                                     alt="Lilly Logo"
-                                    height="28"
-                                    width="auto"
+                                    width={200}
+                                    height={28}
                                 />
                             </div>
 
                             <div className="flex">
-                                <img
+                                <Image
                                     className="mx-auto h-6 w-fit dark:invert"
                                     src="https://html.tailus.io/blocks/customers/openai.svg"
                                     alt="OpenAI Logo"
-                                    height="24"
-                                    width="auto"
+                                    width={200}
+                                    height={24}
                                 />
                             </div>
                         </InfiniteSlider>
