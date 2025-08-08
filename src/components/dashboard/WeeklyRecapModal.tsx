@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { scoreStore } from '@/lib/store';
 
 function getWeekKey(date = new Date()): string {
@@ -16,16 +16,25 @@ function getWeekKey(date = new Date()): string {
 export function WeeklyRecapModal() {
   const [open, setOpen] = useState(false);
 
-  const history = useMemo(() => scoreStore.getHistory(7), []);
-  const scores = Object.values(history);
-  const average = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0) / scores.length) : 0;
-  const best = scores.length ? Math.max(...scores) : 0;
+  const [average, setAverage] = useState(0);
+  const [best, setBest] = useState(0);
 
   useEffect(() => {
     try {
       const wk = getWeekKey();
       const dismissed = localStorage.getItem('xgod-recap-dismissed-week');
       if (dismissed !== wk) setOpen(true);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      const history = scoreStore.getHistory(7);
+      const scores = Object.values(history);
+      const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0) / scores.length) : 0;
+      const max = scores.length ? Math.max(...scores) : 0;
+      setAverage(avg);
+      setBest(max);
     } catch {}
   }, []);
 
