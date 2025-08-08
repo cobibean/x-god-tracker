@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAdminConfig } from '@/lib/config-context';
 import { ActionType } from '@/lib/config-schemas';
 import { 
@@ -12,9 +12,15 @@ import {
   Target,
   Eye,
   EyeOff,
-  RotateCcw
+  RotateCcw,
+  Cloud,
+  CloudOff,
+  Download,
+  Upload,
+  RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { syncToday } from '@/lib/sync';
 
 interface ActionItemProps {
   action: ActionType;
@@ -270,6 +276,11 @@ export default function ActionsAdmin() {
   const [editingAction, setEditingAction] = useState<ActionType | null>(null);
   const [showNewActionForm, setShowNewActionForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [syncEnabled, setSyncEnabled] = useState<boolean | null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Initialize local state from config
   useEffect(() => {
@@ -277,6 +288,84 @@ export default function ActionsAdmin() {
       setActions([...config.actions]);
     }
   }, [config]);
+
+  // Load server sync status
+  useEffect(() => {
+    const loadHealth = async () => {
+      try {
+        setHealthLoading(true);
+        const res = await fetch('/api/health');
+        if (res.ok) {
+          const json = await res.json();
+          setSyncEnabled(!!json?.health?.hasPostgresUrl);
+        } else {
+          setSyncEnabled(false);
+        }
+      } catch {
+        setSyncEnabled(false);
+      } finally {
+        setHealthLoading(false);
+      }
+    };
+    loadHealth();
+  }, []);
+
+  const handleExportDailyData = async () => {
+    try {
+      setExporting(true);
+      const res = await fetch('/api/data/export');
+      if (!res.ok) throw new Error('Export failed');
+      const json = await res.json();
+      const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `xgod-daily-data-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success('Daily data exported');
+    } catch (e) {
+      toast.error('Failed to export daily data');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleChooseImportFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportDailyData = async (file: File) => {
+    try {
+      setImporting(true);
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const rows = Array.isArray(parsed?.rows) ? parsed.rows : [];
+      const res = await fetch('/api/data/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
+      if (!res.ok) throw new Error('Import failed');
+      toast.success('Daily data imported');
+    } catch (e) {
+      toast.error('Failed to import daily data');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSyncTodayNow = async () => {
+    try {
+      await syncToday();
+      toast.success('Sync triggered');
+    } catch {
+      toast.error('Failed to trigger sync');
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -383,7 +472,24 @@ export default function ActionsAdmin() {
           </p>
         </div>
         
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 items-center">
+          {/* Sync status */}
+          <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs border ${syncEnabled ? 'text-green-600 border-green-600/30 bg-green-600/10' : 'text-amber-600 border-amber-600/30 bg-amber-600/10'}`}>
+            {healthLoading ? (
+              <>
+                <RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Checking sync
+              </>
+            ) : syncEnabled ? (
+              <>
+                <Cloud className="w-3 h-3 mr-1" /> Sync enabled
+              </>
+            ) : (
+              <>
+                <CloudOff className="w-3 h-3 mr-1" /> Sync disabled
+              </>
+            )}
+          </span>
+
           <button
             onClick={handleResetToDefaults}
             className="flex items-center space-x-2 px-4 py-2 bg-muted text-muted-foreground border border-border rounded-md hover:bg-accent transition-colors"
@@ -409,6 +515,43 @@ export default function ActionsAdmin() {
           <p className="text-destructive">{error}</p>
         </div>
       )}
+
+      {/* Sync utilities */}
+      <div className="bg-card border border-border rounded-lg p-4 flex flex-wrap items-center gap-2">
+        <button
+          onClick={handleSyncTodayNow}
+          className="flex items-center space-x-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>Sync Today Now</span>
+        </button>
+        <button
+          onClick={handleExportDailyData}
+          disabled={exporting || syncEnabled === false}
+          className="flex items-center space-x-2 px-3 py-2 bg-muted text-muted-foreground border border-border rounded-md hover:bg-accent transition-colors disabled:opacity-50"
+        >
+          <Download className="w-4 h-4" />
+          <span>{exporting ? 'Exporting…' : 'Export Daily Data'}</span>
+        </button>
+        <button
+          onClick={handleChooseImportFile}
+          disabled={importing || syncEnabled === false}
+          className="flex items-center space-x-2 px-3 py-2 bg-muted text-muted-foreground border border-border rounded-md hover:bg-accent transition-colors disabled:opacity-50"
+        >
+          <Upload className="w-4 h-4" />
+          <span>{importing ? 'Importing…' : 'Import Daily Data'}</span>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={(e) => e.target.files && e.target.files[0] && handleImportDailyData(e.target.files[0])}
+        />
+        <div className="text-xs text-muted-foreground ml-auto">
+          {syncEnabled ? 'Server sync is enabled.' : 'Set POSTGRES_URL to enable server sync.'}
+        </div>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

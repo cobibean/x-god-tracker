@@ -3,6 +3,7 @@
 import { BentoCard } from "@/components/ui/bento-grid";
 import { useEffect, useState } from "react";
 import { scoreStore } from "@/lib/store";
+import { useMemo } from "react";
 
 const getPast7Days = () => {
     const days: string[] = [];
@@ -16,23 +17,43 @@ const getPast7Days = () => {
 
 export function ScoreChartCard() {
     const [scores, setScores] = useState<number[]>([]);
-    const labels = getPast7Days();
+    const labels = useMemo(() => getPast7Days(), []);
 
     useEffect(() => {
-        const load = () => {
+        const loadLocal = () => {
             const history = scoreStore.getHistory(7);
             const vals = Object.values(history).reverse();
             if (vals.length === 0) {
                 setScores([0,0,0,0,0,0,0]);
             } else {
-                // pad to 7
                 const padded = [...Array(Math.max(0, 7 - vals.length)).fill(0), ...vals];
                 setScores(padded.slice(-7));
             }
         };
-        load();
-        window.addEventListener('storageUpdated', load);
-        return () => window.removeEventListener('storageUpdated', load);
+
+        const tryFetchRemote = async () => {
+            try {
+                const end = new Date();
+                const start = new Date();
+                start.setDate(end.getDate() - 6);
+                const d = (x: Date) => x.toISOString().split('T')[0];
+                const res = await fetch(`/api/data/range?start=${d(start)}&end=${d(end)}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    const vals = (json.data || []).map((r: any) => Number(r.score) || 0);
+                    if (Array.isArray(vals) && vals.length) {
+                        setScores(vals);
+                        return;
+                    }
+                }
+            } catch {}
+            // Fallback to local if remote fails
+            loadLocal();
+        };
+
+        tryFetchRemote();
+        window.addEventListener('storageUpdated', loadLocal);
+        return () => window.removeEventListener('storageUpdated', loadLocal);
     }, []);
 
     const getBarColor = (score: number) => {

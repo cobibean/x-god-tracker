@@ -13,6 +13,7 @@ import {
   Eye
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getThemeVarsFor } from '@/lib/theme-utils';
 
 export default function AppearanceAdmin() {
   const [theme, setTheme] = useState('system');
@@ -56,6 +57,8 @@ export default function AppearanceAdmin() {
       
       // Apply theme immediately
       applyTheme();
+      // Notify provider to re-apply
+      window.dispatchEvent(new Event('appearanceUpdated'));
       
       toast.success('Appearance settings saved!');
     } catch (error) {
@@ -85,7 +88,10 @@ export default function AppearanceAdmin() {
     }
     
     // Apply other settings
-    root.style.setProperty('--primary-color', `var(--${primaryColor}-500)`);
+    // Primary color via CSS variables consumed by Tailwind
+    const { primary, primaryFg } = getThemeVarsFor(primaryColor);
+    root.style.setProperty('--primary', primary);
+    root.style.setProperty('--primary-foreground', primaryFg);
     
     if (compactMode) {
       root.classList.add('compact');
@@ -110,6 +116,7 @@ export default function AppearanceAdmin() {
       
       localStorage.removeItem('appearance-settings');
       applyTheme();
+      window.dispatchEvent(new Event('appearanceUpdated'));
       
       toast.success('Reset to defaults successfully!');
     }
@@ -117,6 +124,7 @@ export default function AppearanceAdmin() {
 
   const previewChanges = () => {
     applyTheme();
+    window.dispatchEvent(new Event('appearanceUpdated'));
     toast.success('Preview applied! Save to persist changes.');
   };
 

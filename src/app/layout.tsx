@@ -4,6 +4,8 @@ import "./globals.css";
 import { ConfigProvider } from "@/lib/config-context";
 import Script from "next/script";
 import { Toaster } from "react-hot-toast";
+import { ThemeProvider } from "@/lib/theme-provider";
+import { DailySyncClient } from "@/lib/DailySyncClient";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-background text-foreground antialiased min-h-screen`}>
+        <ThemeProvider>
         <ConfigProvider>
           {/* Run daily reset on client after hydration */}
           <Script id="daily-reset" strategy="afterInteractive">
@@ -59,6 +62,8 @@ export default function RootLayout({
             }}
           />
         </ConfigProvider>
+        <DailySyncClient />
+        </ThemeProvider>
       </body>
     </html>
   );
