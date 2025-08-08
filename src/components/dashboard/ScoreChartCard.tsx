@@ -4,6 +4,7 @@ import { BentoCard } from "@/components/ui/bento-grid";
 import { useEffect, useState } from "react";
 import { scoreStore } from "@/lib/store";
 import { useMemo } from "react";
+import type { DailyData } from "@/lib/daily-schemas";
 
 const getPast7Days = () => {
     const days: string[] = [];
@@ -40,7 +41,8 @@ export function ScoreChartCard() {
                 const res = await fetch(`/api/data/range?start=${d(start)}&end=${d(end)}`);
                 if (res.ok) {
                     const json = await res.json();
-                    const vals = (json.data || []).map((r: any) => Number(r.score) || 0);
+                    const rows: DailyData[] = Array.isArray(json?.data) ? (json.data as DailyData[]) : [];
+                    const vals = rows.map((r) => r.score);
                     if (Array.isArray(vals) && vals.length) {
                         setScores(vals);
                         return;

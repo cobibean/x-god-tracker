@@ -20,7 +20,8 @@ export function StreakBadge() {
       d.setDate(d.getDate() - 1);
     }
     setStreak(s);
-    setTodayKey(dateKey(new Date()));
+    const next = dateKey(new Date());
+    if (next !== todayKey) setTodayKey(next);
   };
 
   useEffect(() => {

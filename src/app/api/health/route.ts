@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
     // Test ConfigManager initialization
     try {
       console.log('Testing ConfigManager initialization...');
-      const configManager = getConfigManager();
+      // Ensure initialization succeeds
+      getConfigManager();
       healthCheck.configManager = 'OK';
       console.log('ConfigManager test passed');
     } catch (error) {

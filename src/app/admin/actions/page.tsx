@@ -326,7 +326,7 @@ export default function ActionsAdmin() {
       a.remove();
       URL.revokeObjectURL(url);
       toast.success('Daily data exported');
-    } catch (e) {
+    } catch {
       toast.error('Failed to export daily data');
     } finally {
       setExporting(false);
@@ -350,7 +350,7 @@ export default function ActionsAdmin() {
       });
       if (!res.ok) throw new Error('Import failed');
       toast.success('Daily data imported');
-    } catch (e) {
+    } catch {
       toast.error('Failed to import daily data');
     } finally {
       setImporting(false);
