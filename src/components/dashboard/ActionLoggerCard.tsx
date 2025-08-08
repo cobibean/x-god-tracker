@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { useConfigType } from '@/lib/config-context';
 import { ActionType } from '@/lib/config-schemas';
+import { actionStore, ActionLoggerState } from '@/lib/store';
 
 interface ActionCounts {
   [key: string]: number;
@@ -20,22 +21,34 @@ export function ActionLoggerCard() {
   // Filter enabled actions and sort by order if it exists
   const enabledActions = actions.filter(action => action.enabled);
 
-  // Initialize action counts
+  // Initialize action counts from centralized store
   useEffect(() => {
-    const savedCounts = localStorage.getItem('action-counts');
-    if (savedCounts) {
-      try {
-        const parsed = JSON.parse(savedCounts);
-        setActionCounts(parsed);
-      } catch (error) {
-        console.error('Error loading action counts:', error);
-      }
+    try {
+      const saved = actionStore.get();
+      const normalized: ActionCounts = {
+        valueDmsSent: saved.valueDmsSent ?? 0,
+        newLeadsAdded: saved.newLeadsAdded ?? 0,
+        newEngagersLogged: saved.newEngagersLogged ?? 0,
+        sequencesProgressed: saved.sequencesProgressed ?? 0,
+        peopleAdvanced: saved.peopleAdvanced ?? 0,
+      };
+      setActionCounts(normalized);
+    } catch {
+      // ignore
     }
   }, []);
 
-  // Save action counts to localStorage
+  // Persist to store and notify
   useEffect(() => {
-    localStorage.setItem('action-counts', JSON.stringify(actionCounts));
+    const next: ActionLoggerState = {
+      valueDmsSent: actionCounts.valueDmsSent || 0,
+      newLeadsAdded: actionCounts.newLeadsAdded || 0,
+      newEngagersLogged: actionCounts.newEngagersLogged || 0,
+      sequencesProgressed: actionCounts.sequencesProgressed || 0,
+      peopleAdvanced: actionCounts.peopleAdvanced || 0,
+    };
+    actionStore.set(next);
+    window.dispatchEvent(new Event('storageUpdated'));
   }, [actionCounts]);
 
   const incrementAction = (actionKey: string) => {

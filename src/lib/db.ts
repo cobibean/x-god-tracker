@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import type Database from 'better-sqlite3';
 import { z } from 'zod';
 import path from 'path';
 import { ConfigType, getSchema } from './config-schemas';
@@ -14,7 +14,10 @@ function getDatabase() {
   if (!db) {
     try {
       console.log('Initializing database at:', DB_PATH);
-      db = new Database(DB_PATH);
+      // Dynamically require better-sqlite3 to avoid loading native module at build time
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const BetterSqlite3 = require('better-sqlite3') as typeof import('better-sqlite3');
+      db = new BetterSqlite3(DB_PATH);
       
       // Enable WAL mode for better concurrency
       db.pragma('journal_mode = WAL');
@@ -264,8 +267,8 @@ export class ConfigManager {
 let configManager: ConfigManager | null = null;
 
 export function getConfigManager(): ConfigManager {
-  // TEMPORARY: Disable PostgreSQL while debugging connection issues
-  const FORCE_SQLITE = true; // Set to false once PostgreSQL is working
+  // Prefer PostgreSQL in environments where POSTGRES_URL is set
+  const FORCE_SQLITE = false;
   
   // Check if we should use PostgreSQL in production
   if (process.env.POSTGRES_URL && !FORCE_SQLITE) {
@@ -282,11 +285,7 @@ export function getConfigManager(): ConfigManager {
       // Fall through to SQLite fallback
     }
   } else {
-    if (FORCE_SQLITE) {
-      console.log('PostgreSQL temporarily disabled, using SQLite');
-    } else {
-      console.log('No POSTGRES_URL found, using SQLite');
-    }
+    console.log('No POSTGRES_URL found or SQLite forced, using SQLite');
   }
   
   // Use SQLite for development or as fallback
@@ -302,5 +301,4 @@ export function getConfigManager(): ConfigManager {
   return configManager;
 }
 
-// Initialize database on module load
-initializeTables(); 
+// Note: Do not initialize on module load to avoid native module issues during build

@@ -2,29 +2,28 @@
 
 import { BentoCard } from "@/components/ui/bento-grid";
 import { useEffect, useState } from "react";
+import { scoreStore } from "@/lib/store";
+import { useConfigType } from "@/lib/config-context";
+import dynamic from "next/dynamic";
+import { Celebration } from "./Celebration";
 
-// This would eventually be moved to a central store/context
-const calculateScore = (checked: Record<string, boolean>, actions: Record<string, number>) => {
-    let score = 0;
-    if (checked.warmup) score += 1;
-    if (checked.anchor) score += 1;
-    if (checked.velocity) score += 1;
-    if (actions.newEngagersLogged > 0) score += 1;
-    if (actions.sequencesProgressed > 0) score += 1;
-    if (actions.peopleAdvanced > 0) score += 1;
-    if (actions.valueDmsSent >= 5) score += 2;
-    if (actions.newLeadsAdded >= 5) score += 2;
-    return score;
+// Compute score with weights from scoring config
+function useScoring() {
+  const scoring = useConfigType('scoring');
+  return scoring;
 }
 
 export function DailyScoreCard() {
     const [score, setScore] = useState(0);
+    const scoring = useScoring();
 
     useEffect(() => {
         const handleStorageChange = () => {
-            const checklistState = JSON.parse(localStorage.getItem('dailyChecklistState') || '{}');
-            const actionState = JSON.parse(localStorage.getItem('actionLoggerState') || '{}');
-            setScore(calculateScore(checklistState, actionState));
+            // Derive a simple 0-10 score using central scoreStore for now
+            // Future: apply scoring.rules weights to a richer calculation
+            const s = scoreStore.getTodayScore();
+            // Normalize to 0-10 if needed; current scoreStore already aims at 10-scale
+            setScore(Math.max(0, Math.min(10, Math.round(s))));
         };
 
         // Listen for custom event
@@ -38,10 +37,11 @@ export function DailyScoreCard() {
         };
     }, []);
 
-    const getScoreColor = (score: number) => {
-        if (score >= 8) return 'text-emerald-500';
-        if (score >= 6) return 'text-yellow-500';
-        if (score >= 4) return 'text-orange-500';
+    const getScoreColor = (s: number) => {
+        const { thresholds } = scoring;
+        if (s >= thresholds.excellent) return 'text-emerald-500';
+        if (s >= thresholds.good) return 'text-yellow-500';
+        if (s >= thresholds.okay) return 'text-orange-500';
         return 'text-red-500';
     };
 
@@ -53,11 +53,12 @@ export function DailyScoreCard() {
             className="col-span-1 row-span-1"
             background={<div/>}
             Icon={() => <div/>}
-            description={`Track your execution. ${score >= 8 ? 'Excellent!' : score >= 6 ? 'Good progress' : score >= 4 ? 'Keep pushing' : 'Let\'s improve'}`}
+            description={`Track your execution. ${score >= scoring.thresholds.excellent ? scoring.messages.excellent : score >= scoring.thresholds.good ? scoring.messages.good : score >= scoring.thresholds.okay ? scoring.messages.okay : scoring.messages.poor}`}
             href="/playbook"
             cta="Learn More"
         >
             <div className="flex h-full flex-col items-center justify-center p-6 pt-0">
+                <Celebration trigger={score >= scoring.thresholds.excellent} />
                 <div className="relative mb-4">
                     <div className={`text-7xl font-bold tracking-tight ${getScoreColor(score)} transition-colors`}>
                         {score}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConfigProvider } from "@/lib/config-context";
+import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,6 +21,31 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-background text-foreground antialiased min-h-screen`}>
         <ConfigProvider>
+          {/* Run daily reset on client after hydration */}
+          <Script id="daily-reset" strategy="afterInteractive">
+            {`
+              try {
+                (function(){
+                  const getCurrentDateString = () => new Date().toISOString().split('T')[0];
+                  const today = getCurrentDateString();
+                  const last = localStorage.getItem('lastResetDate');
+                  if (last !== today) {
+                    // reset checklist and actions
+                    localStorage.setItem('dailyChecklistState', JSON.stringify({}));
+                    localStorage.setItem('actionLoggerState', JSON.stringify({
+                      valueDmsSent: 0,
+                      newLeadsAdded: 0,
+                      newEngagersLogged: 0,
+                      sequencesProgressed: 0,
+                      peopleAdvanced: 0,
+                    }));
+                    localStorage.setItem('lastResetDate', today);
+                    window.dispatchEvent(new Event('storageUpdated'));
+                  }
+                })();
+              } catch {}
+            `}
+          </Script>
           {children}
           <Toaster 
             position="top-right"

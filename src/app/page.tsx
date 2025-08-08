@@ -4,6 +4,8 @@ import { ActionLoggerCard } from "@/components/dashboard/ActionLoggerCard";
 import { DailyScoreCard } from "@/components/dashboard/DailyScoreCard";
 import { PlaybookReferenceCard } from "@/components/dashboard/PlaybookReferenceCard";
 import { ScoreChartCard } from "@/components/dashboard/ScoreChartCard";
+import { TodaysPlanCard } from "@/components/dashboard/TodaysPlanCard";
+import { WeeklyRecapModal } from "@/components/dashboard/WeeklyRecapModal";
 import Link from "next/link";
 import { Settings } from "lucide-react";
 
@@ -35,7 +37,8 @@ export default function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 auto-rows-min">
         {/* Left Column - Main Content */}
         <div className="lg:col-span-3 space-y-6">
-          {/* Checklist - Takes full width of left column */}
+          {/* Today's Plan + Checklist */}
+          <TodaysPlanCard />
           <DailyChecklistCard />
           
           {/* Two column sub-grid for smaller cards */}
@@ -57,6 +60,8 @@ export default function Home() {
           <ScoreChartCard />
         </div>
       </div>
+      {/* Weekly Recap */}
+      <WeeklyRecapModal />
     </div>
   );
 } 

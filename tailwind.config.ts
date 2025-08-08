@@ -18,6 +18,12 @@ const config: Config = {
         "2xl": "1400px",
       },
     },
+    safelist: [
+      // category badge colors used dynamically via config
+      {
+        pattern: /(bg|text|border)-(blue|green|yellow|red|purple|pink|indigo|cyan|orange|emerald|slate|gray|zinc|stone|amber)-(50|100|200|300|400|500|600|700|800|900)(\/\d{1,2})?/,
+      },
+    ],
     extend: {
       colors: {
         border: "hsl(var(--border))",

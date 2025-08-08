@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { useConfigType } from '@/lib/config-context';
+import { checklistStore } from '@/lib/store';
 
 export function DailyChecklistCard() {
   // Get checklist configuration
@@ -12,32 +13,33 @@ export function DailyChecklistCard() {
   // State for completed tasks
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
 
-  // Load completed tasks from localStorage on mount
+  // Load completed tasks from centralized store on mount
   useEffect(() => {
-    const saved = localStorage.getItem('completed-tasks');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setCompletedTasks(new Set(parsed));
-      } catch (error) {
-        console.error('Error loading completed tasks:', error);
-      }
+    try {
+      const saved = checklistStore.get();
+      const checkedIds = Object.entries(saved)
+        .filter(([, v]) => Boolean(v))
+        .map(([k]) => k);
+      setCompletedTasks(new Set(checkedIds));
+    } catch {
+      // ignore
     }
   }, []);
 
-  // Save completed tasks to localStorage whenever it changes
+  // Persist to centralized store and notify listeners
   useEffect(() => {
-    localStorage.setItem('completed-tasks', JSON.stringify(Array.from(completedTasks)));
-  }, [completedTasks]);
+    const nextState: Record<string, boolean> = {};
+    tasks.filter(t=>t.enabled).forEach(task => {
+      nextState[task.id] = completedTasks.has(task.id);
+    });
+    checklistStore.set(nextState);
+    window.dispatchEvent(new Event('storageUpdated'));
+  }, [completedTasks, tasks]);
 
   const toggleTask = (taskId: string) => {
     setCompletedTasks(prev => {
       const updated = new Set(prev);
-      if (updated.has(taskId)) {
-        updated.delete(taskId);
-      } else {
-        updated.add(taskId);
-      }
+      if (updated.has(taskId)) updated.delete(taskId); else updated.add(taskId);
       return updated;
     });
   };

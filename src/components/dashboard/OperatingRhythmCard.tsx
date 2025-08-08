@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Play, Pause, RotateCcw, VolumeX } from 'lucide-react';
 import { useConfigType } from '@/lib/config-context';
 import { RhythmBlock } from '@/lib/config-schemas';
+import { DayTimelineCard } from './DayTimelineCard';
 
 interface TimerState {
   isActive: boolean;
@@ -422,6 +423,11 @@ export function OperatingRhythmCard() {
             </div>
           );
         })}
+      </div>
+
+      {/* Day Timeline (Phase 2 MVP) */}
+      <div className="mt-6">
+        <DayTimelineCard />
       </div>
 
       {/* Empty State */}

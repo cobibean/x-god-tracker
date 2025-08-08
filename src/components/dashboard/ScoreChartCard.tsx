@@ -2,6 +2,7 @@
 
 import { BentoCard } from "@/components/ui/bento-grid";
 import { useEffect, useState } from "react";
+import { scoreStore } from "@/lib/store";
 
 const getPast7Days = () => {
     const days: string[] = [];
@@ -18,8 +19,20 @@ export function ScoreChartCard() {
     const labels = getPast7Days();
 
     useEffect(() => {
-        // Mock data for now - in the future, load from localStorage history
-        setScores([5, 7, 8, 6, 9, 7, 10]);
+        const load = () => {
+            const history = scoreStore.getHistory(7);
+            const vals = Object.values(history).reverse();
+            if (vals.length === 0) {
+                setScores([0,0,0,0,0,0,0]);
+            } else {
+                // pad to 7
+                const padded = [...Array(Math.max(0, 7 - vals.length)).fill(0), ...vals];
+                setScores(padded.slice(-7));
+            }
+        };
+        load();
+        window.addEventListener('storageUpdated', load);
+        return () => window.removeEventListener('storageUpdated', load);
     }, []);
 
     const getBarColor = (score: number) => {
